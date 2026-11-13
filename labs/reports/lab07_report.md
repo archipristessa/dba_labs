@@ -1,31 +1,8 @@
 # Лабораторная работа №7 — отчёт
 
 **Студент:** Исобаева Дарья Александровна, группа ПИ 4-1
-**Дата:** 2026-11-05
+**Дата:** 05.11.2026
 **Среда:** PostgreSQL 18.6, PgBouncer 1.26.1, Windows x86_64
-
----
-
-## Часть 0. Подготовка данных
-
-### 0.1. Исходное состояние
-
-Объём совпал с эталоном лаб. 06: 20 000 / 1 000 / 200 000 / 600 000 строк.
-Индексы после лаб. 06: `customers_pkey`, `customers_email_key`, `orders_pkey`, `order_items_pkey`,
-`idx_customers_region`, `idx_orders_created_at`, `idx_orders_customer_id`, `idx_order_items_order`.
-Индексов, где `status` — первый столбец, не было — удалять нечего.
-
-### 0.2. Распределение статусов
-
-`UPDATE` по 200 000 строк с `setseed(0.42)` + `VACUUM ANALYZE orders`. Результат **точно совпал с эталоном**:
-
-| status | count |
-|---|---|
-| delivered | 170 033 |
-| cancelled | 10 098 |
-| shipped | 10 036 |
-| processing | 5 911 |
-| pending | 3 922 |
 
 ---
 
