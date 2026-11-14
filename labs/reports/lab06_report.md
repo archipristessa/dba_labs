@@ -40,7 +40,7 @@
 | `SELECT p.name, SUM(oi.quantity) AS total_sold FROM products` (Q3) | 9 | 143,14 | 8,06 | (9 562 + 35 842) / 9 ≈ **5 045** |
 | `SELECT * FROM orders WHERE status = $1 ORDER BY created_at` (Q2) | 9 | 98,61 | 6,23 | (16 119 + 0) / 9 ≈ **1 791** |
 
-Обратите внимание: константа в Q2 заменена параметром `$1` — `pg_stat_statements` нормализует текст.
+Константа в Q2 заменена параметром `$1` — `pg_stat_statements` нормализует текст.
 
 ## 1.4. Оценка полного чтения без EXPLAIN
 
@@ -51,7 +51,7 @@
 | customers | 217 | 1 736 кБ |
 | products | 10 | 80 кБ |
 
-**Ответ:** таблицы целиком читают **все три запроса**:
+Таблицы целиком читают **все три запроса**:
 
 - **Q2** — 1 791 страница за вызов при размере `orders` 1 788 страниц → читается вся таблица
   (Seq Scan, несмотря на 2 % нужных строк: индекс по `status` ещё не создан);
@@ -79,10 +79,7 @@ Execution Time: 108.162 ms
 
 ## 2.3. Запрос с фильтром и двумя JOIN — без индексов
 
-Перед опытом проверено: в базе ровно 4 индекса — `customers_pkey`, `customers_email_key`,
-`orders_pkey`, `order_items_pkey`. Индексов `idx_*` не было.
-
-Запрос выполнен 3 раза, ниже план 3-го запуска.
+Запрос выполнен 3 раза, план 3-го запуска.
 
 1. **Тип JOIN:** `Parallel Hash Join` (`order_items` ⨝ `orders`) → `Hash Join` (результат ⨝ `customers`).
 2. **Узлы Seq Scan:** `Parallel Seq Scan on order_items`, `Parallel Seq Scan on orders`,
@@ -102,7 +99,7 @@ Buffers: shared hit=7474
 
 ## 2.4. Сравнение с индексами
 
-Созданы 4 индекса из лабы; запрос выполнен 3 раза, ниже 3-й запуск.
+Созданы 4 индекса; запрос выполнен 3 раза, ниже 3-й запуск.
 
 | Метрика | Без индексов | С индексами |
 |---|---|---|
@@ -180,11 +177,6 @@ perl C:\pgbadger\pgbadger-master\pgbadger "C:\Program Files\PostgreSQL\18\data\l
 |---|---|---|---|
 | 1 | 3 | 94 ms | `select * from orders where status = ? order by created_at;` (Q2) |
 | 2 | 3 | 174 ms | Q1 |
-
-### 3.4. Возврат настроек
-
-`ALTER SYSTEM SET log_min_duration_statement = 500; SELECT pg_reload_conf();` — проверено:
-`SHOW log_min_duration_statement` → `500ms`.
 
 ---
 
@@ -286,8 +278,7 @@ LEFT JOIN orders o ON o.customer_id=c.id GROUP BY c.id,c.name;
 читает каждую страницу один раз, а сам индекс — всего 6 страниц, поэтому это дешевле, чем Seq Scan
 (1 788 страниц подряд + разбор 200 000 строк). Seq Scan планировщик выбирает, когда индекс не даёт
 выигрыша: нужно ≥ ~30 % строк **и** строки размазаны по всем страницам, либо индекс не покрывает
-условие. После перераспределения статусов в лаб. 07 (`delivered` = 85 %) индекс по `status`
-перестанет помогать — это проверено там же.
+условие.
 
 ### 4. Внешние ключи без индексов
 
@@ -298,7 +289,7 @@ LEFT JOIN orders o ON o.customer_id=c.id GROUP BY c.id,c.name;
 ```
 
 `orders.customer_id` и `order_items.order_id` уже покрыты индексами из п. 2.4, поэтому в списке
-остался только `order_items.product_id` (его индекс создаётся в лаб. 07 через `CONCURRENTLY`).
+остался только `order_items.product_id`.
 
 Стоимость проверки FK при удалении заказа (`DELETE FROM orders WHERE id = 1`, 3 строки в `order_items`):
 
@@ -310,15 +301,3 @@ LEFT JOIN orders o ON o.customer_id=c.id GROUP BY c.id,c.name;
 **Вывод:** без индекса на `order_items.order_id` каждое удаление/обновление заказа вызывает
 **последовательное сканирование 39 МБ** `order_items`. Разница ×36 на трёх строках; на production
 с массовыми удалениями это блокировки и деградация.
-
----
-
-## Чек-лист
-
-- [x] `pg_stat_statements` подключён, `SELECT count(*) FROM pg_stat_statements` работает.
-- [x] `lab06_report.md` создан, все таблицы и ответы перенесены.
-- [x] Таблица топ-запросов (п. 1.3) заполнена, включая `страниц / calls`.
-- [x] Определено, что Q1–Q3 читают таблицы целиком (п. 1.4).
-- [x] `EXPLAIN ANALYZE` до и после индексов; таблица п. 2.4 заполнена.
-- [x] Итоговый анализ проблемного запроса (часть 4) оформлен.
-- [x] `log_min_duration_statement` возвращён к 500 ms.
