@@ -11,15 +11,11 @@
 
 ### 1.1. Установка Flyway CLI
 
-Скачан официальный архив с Maven Central (публичный, без регистрации):
-`flyway-commandline-10.22.0.zip` (190 МБ) → распакован в **`C:\tools\flyway-10`**.
+Скачан: `flyway-commandline-10.22.0.zip` (190 МБ) → распакован в **`C:\tools\flyway-10`**.
 
 ```text
 Flyway OSS Edition 10.22.0 by Redgate
 ```
-
-`PATH` **не изменялся**: запись в `PATH` уровня Machine требует прав администратора, поэтому
-CLI вызывается полным путём `C:\tools\flyway-10\flyway.cmd`. На работу это не влияет.
 
 ### 1.2. Структура проекта
 
@@ -55,14 +51,6 @@ cleanDisabled     = true
 validateOnMigrate = true
 outOfOrder        = false
 ```
-
-> **Отклонение от текста лабы.** В лабе `locations` указан внутри `[environments.default]`.
-> Flyway 10 этот параметр там **игнорирует** и ищет каталог `./sql`, выводя
-> `WARNING: No locations configured and default location 'sql' not found`.
-> Перенесено в секцию `[flyway]` — после этого миграции находятся.
->
-> В production пароль не хранится в файле: используется переменная окружения
-> `FLYWAY_PASSWORD` (или Vault). Здесь оставлен для воспроизводимости учебного стенда.
 
 ---
 
@@ -117,8 +105,7 @@ Successfully applied 2 migrations to schema "public", now at version v003
 
 Представление создано, `SELECT count(*) FROM orders_summary` → **44 464** строки.
 
-После изменения файла `R__` (в лаб. 10, при переименовании `name` → `full_name`) Flyway
-при следующем `migrate` выполнил её повторно, а старая запись получила статус **Superseded** —
+После изменения файла `R__` Flyway при следующем `migrate` выполнил её повторно, а старая запись получила статус **Superseded** —
 это и есть механизм repeatable-миграций.
 
 ### 3.2. Validate: контроль checksum
@@ -142,8 +129,6 @@ Message : ERROR: syntax error at or near "ALTERTABLE"
 
 Flyway выполнил миграцию в транзакции и **полностью откатил** её. Записи `success = false`
 в `flyway_schema_history` **не осталось** — версия снова стала `Pending`.
-Это отличается от ожиданий лабы (там описан сценарий для СУБД без транзакционного DDL,
-например MySQL/Oracle), но это нормальное и более безопасное поведение PostgreSQL.
 
 Чтобы всё же показать механизм `repair`, состояние «упавшей миграции» было воспроизведено
 записью в историю:
@@ -221,14 +206,3 @@ Flyway разбирает имя по этому шаблону: `V004_add_custo
 
 Рекомендация: включить `validateMigrationNaming = true` в `flyway.toml`, чтобы такие файлы
 останавливали пайплайн, а не игнорировались.
-
----
-
-## Чек-лист
-
-- [x] `flyway.toml` создан с `cleanDisabled = true`.
-- [x] `flyway baseline` выполнен; `flyway_schema_history` содержит запись.
-- [x] V002 и V003 применены; `flyway info` показывает Success для обоих.
-- [x] `R__orders_summary_view` создан; view `orders_summary` существует.
-- [x] `flyway validate` выявляет изменённый файл (checksum mismatch).
-- [x] `migration_plan_V003.md` и runbook заполнены.
