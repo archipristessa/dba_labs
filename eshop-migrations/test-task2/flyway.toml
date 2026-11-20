@@ -1,0 +1,10 @@
+[environments.default]
+url       = "jdbc:postgresql://localhost:5432/eshop_flyway_test"
+user      = "postgres"
+password  = "<пароль роли postgres>"
+
+[flyway]
+locations         = ["filesystem:./migrations"]
+cleanDisabled     = true
+validateOnMigrate = true
+outOfOrder        = false

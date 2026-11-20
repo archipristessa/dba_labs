@@ -1,0 +1,12 @@
+[environments.default]
+url       = "jdbc:postgresql://localhost:5432/eshop"
+user      = "postgres"
+password  = "<пароль роли postgres>"
+
+[flyway]
+# locations — параметр секции [flyway]: в [environments.*] Flyway 10 его игнорирует
+# (без этого Flyway ищет каталог ./sql и пишет WARNING: No locations configured).
+locations         = ["filesystem:./migrations"]
+cleanDisabled     = true
+validateOnMigrate = true
+outOfOrder        = false
